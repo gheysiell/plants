@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:plants/features/plants/domain/entities/plants_categories_entity.dart';
+import 'package:plants/features/plants/domain/entities/plants_entity.dart';
 import 'package:plants/features/plants/presentation/viewmodels/plants_viewmodel.dart';
 import 'package:plants/features/plants_details/presentation/views/plants_details_view.dart';
 import 'package:plants/shared/palette.dart';
@@ -17,9 +19,7 @@ class PlantsView extends StatefulWidget {
 
 class PlantsViewState extends State<PlantsView> {
   late PlantsViewModel plantsViewModel;
-  final TextEditingController controllerSearch = TextEditingController();
-  final FocusNode focusSearch = FocusNode();
-  final ScrollController controllerScroll = ScrollController();
+  final double heightCategory = 70;
   bool initialized = false;
 
   @override
@@ -35,7 +35,8 @@ class PlantsViewState extends State<PlantsView> {
       plantsViewModel = context.watch<PlantsViewModel>();
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await plantsViewModel.getPlants('');
+        await plantsViewModel.getCategories();
+        await plantsViewModel.getPlants();
       });
 
       initialized = true;
@@ -72,115 +73,228 @@ class PlantsViewState extends State<PlantsView> {
         surfaceTintColor: Palette.white,
       ),
       backgroundColor: Palette.white,
-      body: plantsViewModel.loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : RefreshIndicator(
-              onRefresh: () async {
-                await plantsViewModel.getPlants(controllerSearch.text);
-              },
-              child: !plantsViewModel.loading && plantsViewModel.plants.isEmpty
-                  ? SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: SizedBox(
-                        height: Functions.getHeightBody(context),
-                        child: Column(
-                          children: [
-                            const Spacer(),
-                            Container(
-                              height: 150,
-                              alignment: Alignment.center,
-                              child: Image.asset(
-                                'assets/images/icon.png',
-                              ),
-                            ),
-                            const Text(
-                              'Plantas não encontradas',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Palette.gray,
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 50,
-                            ),
-                            const Spacer(),
-                          ],
+      body: Column(
+        children: [
+          Container(
+            height: heightCategory,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            color: Palette.white,
+            child: plantsViewModel.loadingCategories
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : !plantsViewModel.loadingCategories && plantsViewModel.categories.isEmpty
+                    ? Center(
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.refresh_rounded,
+                            color: Palette.primary,
+                            size: 30,
+                          ),
+                          onPressed: () async {
+                            await plantsViewModel.getCategories();
+                          },
                         ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: plantsViewModel.plants.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return ListTile(
-                          leading: SizedBox(
-                            width: 70,
+                      )
+                    : ListView.builder(
+                        itemCount: plantsViewModel.categories.length,
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                        ),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemBuilder: (BuildContext context, int index) {
+                          Category category = plantsViewModel.categories[index];
+
+                          return Container(
+                            margin: const EdgeInsets.only(
+                              right: 8,
+                            ),
                             child: TextButton(
-                              onPressed: () {
-                                Functions.showNetworkImageFullScreen(context, plantsViewModel.plants[index].imageUrl);
+                              onPressed: () async {
+                                plantsViewModel.setIndexCategorySelected(index);
+                                await plantsViewModel.getPlants();
                               },
                               style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  )),
-                              child: CachedNetworkImage(
-                                imageUrl: plantsViewModel.plants[index].imageUrl,
-                                imageBuilder: (context, imageProvider) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image(
-                                      image: imageProvider,
-                                    ),
-                                  );
-                                },
-                                placeholder: (context, url) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    ),
-                                  );
-                                },
-                                errorWidget: (context, url, error) {
-                                  return const Icon(
-                                    Icons.nature,
-                                    size: 50,
-                                    color: Palette.grayLight,
-                                  );
-                                },
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: plantsViewModel.indexCategorySelected == index
+                                    ? Palette.primary
+                                    : Palette.secondary,
                               ),
-                            ),
-                          ),
-                          title: Text(
-                            plantsViewModel.plants[index].name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Palette.gray,
-                              // fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: Text(
-                            plantsViewModel.plants[index].category,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Palette.grayMedium,
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PlantsDetailsView(
-                                  id: plantsViewModel.plants[index].id,
+                              child: Text(
+                                category.name,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: plantsViewModel.indexCategorySelected == index
+                                      ? Palette.white
+                                      : Palette.grayIntermediary,
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-            ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+          Expanded(
+            child: plantsViewModel.loading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await plantsViewModel.getPlants();
+                    },
+                    child: !plantsViewModel.loading && plantsViewModel.plants.isEmpty
+                        ? SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: Functions.getHeightBody(context) - heightCategory,
+                              child: Column(
+                                children: [
+                                  const Spacer(),
+                                  Container(
+                                    height: 200,
+                                    alignment: Alignment.center,
+                                    child: Image.asset(
+                                      'assets/images/icon.png',
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Plantas não encontradas',
+                                    style: TextStyle(
+                                      fontSize: 19,
+                                      color: Palette.grayMedium,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 50,
+                                  ),
+                                  const Spacer(),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Stack(
+                            children: [
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: ListView.builder(
+                                  itemCount: plantsViewModel.plants.length,
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  itemBuilder: (BuildContext context, int index) {
+                                    Plant plant = plantsViewModel.plants[index];
+
+                                    return ListTile(
+                                      leading: SizedBox(
+                                        width: 60,
+                                        child: TextButton(
+                                          onPressed: () {
+                                            Functions.showNetworkImageFullScreen(context, plant.imageUrl);
+                                          },
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: CachedNetworkImage(
+                                            imageUrl: plant.imageUrl,
+                                            imageBuilder: (context, imageProvider) {
+                                              return ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: Image(
+                                                  image: imageProvider,
+                                                ),
+                                              );
+                                            },
+                                            placeholder: (context, url) {
+                                              return const Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 3,
+                                                ),
+                                              );
+                                            },
+                                            errorWidget: (context, url, error) {
+                                              return const Icon(
+                                                Icons.grass_rounded,
+                                                size: 60,
+                                                color: Palette.grayLight,
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        plantsViewModel.plants[index].name,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Palette.gray,
+                                          // fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        plantsViewModel.plants[index].category,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Palette.grayMedium,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PlantsDetailsView(
+                                              id: plantsViewModel.plants[index].id,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 25,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Palette.white,
+                                        Palette.white.withOpacity(0.9),
+                                        Palette.white.withOpacity(0.8),
+                                        Palette.white.withOpacity(0.7),
+                                        Palette.white.withOpacity(0.6),
+                                        Palette.white.withOpacity(0.5),
+                                        Palette.white.withOpacity(0.4),
+                                        Palette.white.withOpacity(0.3),
+                                        Palette.white.withOpacity(0.2),
+                                        Palette.white.withOpacity(0.1),
+                                        Palette.white.withOpacity(0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+          )
+        ],
+      ),
     );
   }
 }
