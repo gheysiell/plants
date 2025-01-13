@@ -7,6 +7,7 @@ class Palette {
   static const Color grayIntermediary = Color(0xFF858585);
   static const Color grayMedium = Color(0xFF919191);
   static const Color grayLight = Color(0xFFAFAFAF);
+  static const Color cremy = Color(0xFFEEEEEE);
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color blue = Color(0xFF2196F3);

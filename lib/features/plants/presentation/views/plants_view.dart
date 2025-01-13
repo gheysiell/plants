@@ -5,6 +5,7 @@ import 'package:plants/features/plants/domain/entities/plants_entity.dart';
 import 'package:plants/features/plants/presentation/viewmodels/plants_viewmodel.dart';
 import 'package:plants/features/plants_details/presentation/views/plants_details_view.dart';
 import 'package:plants/shared/palette.dart';
+import 'package:plants/shared/widgets/not_found.dart';
 import 'package:plants/utils/functions.dart';
 import 'package:provider/provider.dart';
 
@@ -35,8 +36,8 @@ class PlantsViewState extends State<PlantsView> {
       plantsViewModel = context.watch<PlantsViewModel>();
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await plantsViewModel.getCategories();
-        await plantsViewModel.getPlants();
+        plantsViewModel.getCategories();
+        plantsViewModel.getPlants();
       });
 
       initialized = true;
@@ -68,7 +69,7 @@ class PlantsViewState extends State<PlantsView> {
           ),
         ),
         leadingWidth: 70,
-        titleSpacing: 0,
+        titleSpacing: 2,
         backgroundColor: Palette.white,
         surfaceTintColor: Palette.white,
       ),
@@ -151,32 +152,10 @@ class PlantsViewState extends State<PlantsView> {
                     child: !plantsViewModel.loading && plantsViewModel.plants.isEmpty
                         ? SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            child: SizedBox(
+                            child: NotFoundWidget(
+                              title: 'Plantas não encontradas',
                               height: Functions.getHeightBody(context) - heightCategory,
-                              child: Column(
-                                children: [
-                                  const Spacer(),
-                                  Container(
-                                    height: 200,
-                                    alignment: Alignment.center,
-                                    child: Image.asset(
-                                      'assets/images/icon.png',
-                                    ),
-                                  ),
-                                  const Text(
-                                    'Plantas não encontradas',
-                                    style: TextStyle(
-                                      fontSize: 19,
-                                      color: Palette.grayMedium,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 50,
-                                  ),
-                                  const Spacer(),
-                                ],
-                              ),
+                              paddingBottom: 50,
                             ),
                           )
                         : Stack(
@@ -238,11 +217,10 @@ class PlantsViewState extends State<PlantsView> {
                                         style: const TextStyle(
                                           fontSize: 18,
                                           color: Palette.gray,
-                                          // fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                       subtitle: Text(
-                                        plantsViewModel.plants[index].category,
+                                        plantsViewModel.plants[index].climat,
                                         style: const TextStyle(
                                           fontSize: 16,
                                           color: Palette.grayMedium,
@@ -277,11 +255,8 @@ class PlantsViewState extends State<PlantsView> {
                                         Palette.white.withOpacity(0.9),
                                         Palette.white.withOpacity(0.8),
                                         Palette.white.withOpacity(0.7),
-                                        Palette.white.withOpacity(0.6),
                                         Palette.white.withOpacity(0.5),
-                                        Palette.white.withOpacity(0.4),
                                         Palette.white.withOpacity(0.3),
-                                        Palette.white.withOpacity(0.2),
                                         Palette.white.withOpacity(0.1),
                                         Palette.white.withOpacity(0),
                                       ],
@@ -292,7 +267,7 @@ class PlantsViewState extends State<PlantsView> {
                             ],
                           ),
                   ),
-          )
+          ),
         ],
       ),
     );

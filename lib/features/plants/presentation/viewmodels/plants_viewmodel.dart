@@ -45,7 +45,7 @@ class PlantsViewModel extends ChangeNotifier {
   }
 
   Future<void> getPlants() async {
-    String category = categories[indexCategorySelected].name;
+    String category = categories.isNotEmpty ? categories[indexCategorySelected].name : 'Dracaena';
 
     setLoading(true);
 
